@@ -1,4 +1,3 @@
-
 // @ts-check
 'use strict'
 
@@ -22,24 +21,39 @@ let lastWindowId = null;
 // App is quitting
 const beforeQuit = () => {
     quittingApp = true;
-    client.write(consts.targetIds.app,consts.eventNames.appCmdQuit);
+    client.write(consts.targetIds.app, consts.eventNames.appCmdQuit);
 };
 
 // App is ready
-function onReady () {
+function onReady() {
     // Init
     const screen = electron.screen
     Menu.setApplicationMenu(null)
 
     // Listen to screen events
-    screen.on('display-added', function() {
-        client.write(consts.targetIds.app, consts.eventNames.displayEventAdded, {displays: {all: screen.getAllDisplays(), primary: screen.getPrimaryDisplay()}})
+    screen.on('display-added', function () {
+        client.write(consts.targetIds.app, consts.eventNames.displayEventAdded, {
+            displays: {
+                all: screen.getAllDisplays(),
+                primary: screen.getPrimaryDisplay()
+            }
+        })
     })
-    screen.on('display-metrics-changed', function() {
-        client.write(consts.targetIds.app, consts.eventNames.displayEventMetricsChanged, {displays: {all: screen.getAllDisplays(), primary: screen.getPrimaryDisplay()}})
+    screen.on('display-metrics-changed', function () {
+        client.write(consts.targetIds.app, consts.eventNames.displayEventMetricsChanged, {
+            displays: {
+                all: screen.getAllDisplays(),
+                primary: screen.getPrimaryDisplay()
+            }
+        })
     })
-    screen.on('display-removed', function() {
-        client.write(consts.targetIds.app, consts.eventNames.displayEventRemoved, {displays: {all: screen.getAllDisplays(), primary: screen.getPrimaryDisplay()}})
+    screen.on('display-removed', function () {
+        client.write(consts.targetIds.app, consts.eventNames.displayEventRemoved, {
+            displays: {
+                all: screen.getAllDisplays(),
+                primary: screen.getPrimaryDisplay()
+            }
+        })
     })
 
     // Listen on main ipcMain
@@ -55,7 +69,7 @@ function onReady () {
     });
 
     // Read from client
-    rl.on('line', function(line){
+    rl.on('line', function (line) {
         // Parse the JSON
         let json = JSON.parse(line)
 
@@ -215,7 +229,10 @@ function onReady () {
                 executeCallback(consts.callbackNames.webContentsLogin, json, [json.username, json.password]);
                 break;
             case consts.eventNames.webContentsEventInterceptStringProtocolCallback:
-                executeCallback(consts.callbackNames.webContentsInterceptStringProtocol, json, {mimeType: json.mimeType, data: json.data}, false);
+                executeCallback(consts.callbackNames.webContentsInterceptStringProtocol, json, {
+                    mimeType: json.mimeType,
+                    data: json.data
+                }, false);
                 break;
 
             // Window
@@ -304,6 +321,11 @@ function onReady () {
                         .then(() => client.write(json.targetID, consts.eventNames.windowEventWebContentsSetProxy));
                 });
                 break;
+            case consts.eventNames.windowCmdGetUrl:
+                client.write(json.targetID, consts.eventNames.windowEventGetUrl, {
+                    url: elements[json.targetID].webContents.getURL()
+                });
+                break;
         }
     });
 
@@ -322,7 +344,7 @@ function onReady () {
 // start begins listening to go-astilectron.
 function start(address = process.argv[2]) {
     client.init(address);
-    rl = readline.createInterface({ input: client.socket });
+    rl = readline.createInterface({input: client.socket});
 
     app.on("before-quit", beforeQuit);
     if (app.isReady()) {
@@ -337,7 +359,7 @@ function start(address = process.argv[2]) {
 function menuCreate(menu) {
     if (typeof menu !== "undefined") {
         elements[menu.id] = new Menu()
-        for(let i = 0; i < menu.items.length; i++) {
+        for (let i = 0; i < menu.items.length; i++) {
             elements[menu.id].append(menuItemCreate(menu.items[i]))
         }
         return elements[menu.id]
@@ -348,7 +370,7 @@ function menuCreate(menu) {
 // menuItemCreate creates a menu item
 function menuItemCreate(menuItem) {
     const itemId = menuItem.id
-    menuItem.options.click = function(menuItem) {
+    menuItem.options.click = function (menuItem) {
         client.write(itemId, consts.eventNames.menuItemEventClicked, {menuItemOptions: menuItemToJSON(menuItem)})
     }
     if (typeof menuItem.submenu !== "undefined") {
@@ -390,11 +412,21 @@ function setMenu(rootId) {
 function notificationCreate(json) {
     if (Notification.isSupported()) {
         elements[json.targetID] = new Notification(json.notificationOptions);
-        elements[json.targetID].on('action', (event, index) => { client.write(json.targetID, consts.eventNames.notificationEventActioned, {index: index}) })
-        elements[json.targetID].on('click', () => { client.write(json.targetID, consts.eventNames.notificationEventClicked) })
-        elements[json.targetID].on('close', () => { client.write(json.targetID, consts.eventNames.notificationEventClosed) })
-        elements[json.targetID].on('reply', (event, reply) => { client.write(json.targetID, consts.eventNames.notificationEventReplied, {reply: reply}) })
-        elements[json.targetID].on('show', () => { client.write(json.targetID, consts.eventNames.notificationEventShown) })
+        elements[json.targetID].on('action', (event, index) => {
+            client.write(json.targetID, consts.eventNames.notificationEventActioned, {index: index})
+        })
+        elements[json.targetID].on('click', () => {
+            client.write(json.targetID, consts.eventNames.notificationEventClicked)
+        })
+        elements[json.targetID].on('close', () => {
+            client.write(json.targetID, consts.eventNames.notificationEventClosed)
+        })
+        elements[json.targetID].on('reply', (event, reply) => {
+            client.write(json.targetID, consts.eventNames.notificationEventReplied, {reply: reply})
+        })
+        elements[json.targetID].on('show', () => {
+            client.write(json.targetID, consts.eventNames.notificationEventShown)
+        })
     }
     client.write(json.targetID, consts.eventNames.notificationEventCreated)
 }
@@ -405,9 +437,36 @@ function trayCreate(json) {
     if (typeof json.trayOptions.tooltip !== "undefined") {
         elements[json.targetID].setToolTip(json.trayOptions.tooltip);
     }
-    elements[json.targetID].on('click', (index, event) => { client.write(json.targetID, consts.eventNames.trayEventClicked, {"bounds":{x:event.x, y:event.y,width:event.width,height:event.height}})})
-    elements[json.targetID].on('double-click', (index, event) => { client.write(json.targetID, consts.eventNames.trayEventDoubleClicked, {"bounds":{x:event.x, y:event.y,width:event.width,height:event.height}})})
-    elements[json.targetID].on('right-click', (index, event) => { client.write(json.targetID, consts.eventNames.trayEventRightClicked, {"bounds":{x:event.x, y:event.y,width:event.width,height:event.height}})})
+    elements[json.targetID].on('click', (index, event) => {
+        client.write(json.targetID, consts.eventNames.trayEventClicked, {
+            "bounds": {
+                x: event.x,
+                y: event.y,
+                width: event.width,
+                height: event.height
+            }
+        })
+    })
+    elements[json.targetID].on('double-click', (index, event) => {
+        client.write(json.targetID, consts.eventNames.trayEventDoubleClicked, {
+            "bounds": {
+                x: event.x,
+                y: event.y,
+                width: event.width,
+                height: event.height
+            }
+        })
+    })
+    elements[json.targetID].on('right-click', (index, event) => {
+        client.write(json.targetID, consts.eventNames.trayEventRightClicked, {
+            "bounds": {
+                x: event.x,
+                y: event.y,
+                width: event.width,
+                height: event.height
+            }
+        })
+    })
     client.write(json.targetID, consts.eventNames.trayEventCreated)
 }
 
@@ -430,8 +489,10 @@ function windowCreate(json) {
 // windowCreateFinish finishes creating a new window
 function windowCreateFinish(json) {
     elements[json.targetID].setMenu(null)
-    elements[json.targetID].loadURL(json.url, (typeof json.windowOptions.load !== "undefined" ? json.windowOptions.load :  {}));
-    elements[json.targetID].on('blur', () => { client.write(json.targetID, consts.eventNames.windowEventBlur) })
+    elements[json.targetID].loadURL(json.url, (typeof json.windowOptions.load !== "undefined" ? json.windowOptions.load : {}));
+    elements[json.targetID].on('blur', () => {
+        client.write(json.targetID, consts.eventNames.windowEventBlur)
+    })
     elements[json.targetID].on('close', (e) => {
         if (typeof windowOptions[json.targetID] !== "undefined" && typeof windowOptions[json.targetID].custom !== "undefined") {
             if (typeof windowOptions[json.targetID].custom.messageBoxOnClose !== "undefined") {
@@ -456,17 +517,39 @@ function windowCreateFinish(json) {
         client.write(json.targetID, consts.eventNames.windowEventClosed)
         delete elements[json.targetID]
     })
-    elements[json.targetID].on('focus', () => { client.write(json.targetID, consts.eventNames.windowEventFocus) })
-    elements[json.targetID].on('hide', () => { client.write(json.targetID, consts.eventNames.windowEventHide) })
-    elements[json.targetID].on('maximize', () => { client.write(json.targetID, consts.eventNames.windowEventMaximize) })
-    elements[json.targetID].on('minimize', () => { client.write(json.targetID, consts.eventNames.windowEventMinimize) })
-    elements[json.targetID].on('move', () => { client.write(json.targetID, consts.eventNames.windowEventMove) })
-    elements[json.targetID].on('ready-to-show', () => { client.write(json.targetID, consts.eventNames.windowEventReadyToShow) })
-    elements[json.targetID].on('resize', () => { client.write(json.targetID, consts.eventNames.windowEventResize) })
-    elements[json.targetID].on('restore', () => { client.write(json.targetID, consts.eventNames.windowEventRestore) })
-    elements[json.targetID].on('show', () => { client.write(json.targetID, consts.eventNames.windowEventShow) })
-    elements[json.targetID].on('unmaximize', () => { client.write(json.targetID, consts.eventNames.windowEventUnmaximize) })
-    elements[json.targetID].on('unresponsive', () => { client.write(json.targetID, consts.eventNames.windowEventUnresponsive) })
+    elements[json.targetID].on('focus', () => {
+        client.write(json.targetID, consts.eventNames.windowEventFocus)
+    })
+    elements[json.targetID].on('hide', () => {
+        client.write(json.targetID, consts.eventNames.windowEventHide)
+    })
+    elements[json.targetID].on('maximize', () => {
+        client.write(json.targetID, consts.eventNames.windowEventMaximize)
+    })
+    elements[json.targetID].on('minimize', () => {
+        client.write(json.targetID, consts.eventNames.windowEventMinimize)
+    })
+    elements[json.targetID].on('move', () => {
+        client.write(json.targetID, consts.eventNames.windowEventMove)
+    })
+    elements[json.targetID].on('ready-to-show', () => {
+        client.write(json.targetID, consts.eventNames.windowEventReadyToShow)
+    })
+    elements[json.targetID].on('resize', () => {
+        client.write(json.targetID, consts.eventNames.windowEventResize)
+    })
+    elements[json.targetID].on('restore', () => {
+        client.write(json.targetID, consts.eventNames.windowEventRestore)
+    })
+    elements[json.targetID].on('show', () => {
+        client.write(json.targetID, consts.eventNames.windowEventShow)
+    })
+    elements[json.targetID].on('unmaximize', () => {
+        client.write(json.targetID, consts.eventNames.windowEventUnmaximize)
+    })
+    elements[json.targetID].on('unresponsive', () => {
+        client.write(json.targetID, consts.eventNames.windowEventUnresponsive)
+    })
     elements[json.targetID].webContents.on('did-finish-load', () => {
         elements[json.targetID].webContents.executeJavaScript(
             `const {ipcRenderer} = require('electron')
@@ -476,12 +559,12 @@ function windowCreateFinish(json) {
                     if (astilectron.onMessageOnce) {
                         return
                     }
-                    ipcRenderer.on('`+ consts.eventNames.ipcCmdMessage +`', function(event, message) {
+                    ipcRenderer.on('` + consts.eventNames.ipcCmdMessage + `', function(event, message) {
                         let v = callback(message.message)
                         if (typeof message.callbackId !== "undefined") {
-                            let e = {callbackId: message.callbackId, targetID: '`+ json.targetID +`'}
+                            let e = {callbackId: message.callbackId, targetID: '` + json.targetID + `'}
                             if (typeof v !== "undefined") e.message = v
-                            ipcRenderer.send('`+ consts.eventNames.ipcEventMessageCallback +`', e)
+                            ipcRenderer.send('` + consts.eventNames.ipcEventMessageCallback + `', e)
                         }
                     })
                     astilectron.onMessageOnce = true
@@ -489,7 +572,7 @@ function windowCreateFinish(json) {
                 callbacks: {},
                 counters: {},
                 registerCallback: function(k, e, c, n) {
-                    e.targetID = '`+ json.targetID +`';
+                    e.targetID = '` + json.targetID + `';
                     if (typeof c !== "undefined") {
                         if (typeof astilectron.counters[k] === "undefined") {
                             astilectron.counters[k] = 1;
@@ -508,13 +591,13 @@ function windowCreateFinish(json) {
                     }
                 },
                 sendMessage: function(message, callback) {
-                    astilectron.registerCallback('` + consts.callbackNames.webContentsMessage + `', {message: message}, callback, '`+ consts.eventNames.ipcEventMessage +`');
+                    astilectron.registerCallback('` + consts.callbackNames.webContentsMessage + `', {message: message}, callback, '` + consts.eventNames.ipcEventMessage + `');
                 }
             };
-            ipcRenderer.on('`+ consts.eventNames.ipcCmdMessageCallback +`', function(event, message) {
+            ipcRenderer.on('` + consts.eventNames.ipcCmdMessageCallback + `', function(event, message) {
                 astilectron.executeCallback('` + consts.callbackNames.webContentsMessage + `', message, [message.message]);
             });
-            ipcRenderer.on('`+ consts.eventNames.ipcCmdLog+`', function(event, message) {
+            ipcRenderer.on('` + consts.eventNames.ipcCmdLog + `', function(event, message) {
                 console.log(message)
             });
             ` + (typeof json.windowOptions.custom !== "undefined" && typeof json.windowOptions.custom.script !== "undefined" ? json.windowOptions.custom.script : "") + `
@@ -531,14 +614,17 @@ function windowCreateFinish(json) {
     })
     elements[json.targetID].webContents.on('login', (event, request, authInfo, callback) => {
         event.preventDefault();
-        registerCallback(json, consts.callbackNames.webContentsLogin, {authInfo: authInfo, request: request}, consts.eventNames.webContentsEventLogin, callback);
+        registerCallback(json, consts.callbackNames.webContentsLogin, {
+            authInfo: authInfo,
+            request: request
+        }, consts.eventNames.webContentsEventLogin, callback);
     })
     elements[json.targetID].webContents.on('will-navigate', (event, url) => {
         client.write(json.targetID, consts.eventNames.windowEventWillNavigate, {
             url: url
         })
     })
-    if (typeof json.windowOptions.appDetails !== "undefined" && process.platform === "win32"){
+    if (typeof json.windowOptions.appDetails !== "undefined" && process.platform === "win32") {
         elements[json.targetID].setThumbarButtons([]);
         elements[json.targetID].setAppDetails(json.windowOptions.appDetails);
     }
@@ -558,9 +644,9 @@ function registerCallback(json, k, e, n, c) {
     client.write(json.targetID, n, e);
 }
 
-function executeCallback(k, json, args, apply=true) {
+function executeCallback(k, json, args, apply = true) {
     if (typeof callbacks[k][json.callbackId] !== "undefined") {
-        if(apply) {
+        if (apply) {
             callbacks[k][json.callbackId].apply(null, args);
         } else {
             callbacks[k][json.callbackId](args);
@@ -570,7 +656,9 @@ function executeCallback(k, json, args, apply=true) {
 
 function sessionCreate(webContents, sessionId) {
     elements[sessionId] = webContents.session
-    elements[sessionId].on('will-download', () => { client.write(sessionId, consts.eventNames.sessionEventWillDownload) })
+    elements[sessionId].on('will-download', () => {
+        client.write(sessionId, consts.eventNames.sessionEventWillDownload)
+    })
 }
 
 function getLastWindow() {
