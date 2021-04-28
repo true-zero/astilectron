@@ -104,6 +104,7 @@ module.exports = {
         windowCmdWebContentsExecuteJavascript: "window.cmd.web.contents.execute.javascript",
         windowCmdWebContentsInterceptStringProtocol: "window.cmd.web.contents.intercept.string.protocol",
         windowCmdWebContentsSetProxy: "window.cmd.web.contents.set.proxy",
+        windowCmdGetUrl: "window.cmd.get.url",
         windowEventBlur: "window.event.blur",
         windowEventClosed: "window.event.closed",
         windowEventDidFinishLoad: "window.event.did.finish.load",
@@ -126,7 +127,8 @@ module.exports = {
         windowEventWebContentsExecutedJavaScript: "window.event.web.contents.executed.javascript",
         windowEventWebContentsSetProxy: "window.event.web.contents.set.proxy",
         windowEventWebContentsInterceptStringProtocol: "window.event.web.contents.intercept.string.protocol",
-        windowEventUpdatedCustomOptions: "window.event.updated.custom.options"
+        windowEventUpdatedCustomOptions: "window.event.updated.custom.options",
+        windowEventGetUrl: "window.event.get.url"
     },
     targetIds: {
         app: 'app',
